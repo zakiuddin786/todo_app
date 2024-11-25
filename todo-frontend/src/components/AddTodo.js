@@ -8,7 +8,7 @@ const AddTodo = ({ onAdd })=>{
         if(!todo) return;
         console.log(todo)
         onAdd(todo);
-        // setTodo("");
+        setTodo("");
     }
     return (
         <form onSubmit={handleSubmit}>

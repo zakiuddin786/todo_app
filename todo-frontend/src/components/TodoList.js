@@ -40,6 +40,25 @@ const TodoList = () =>{
         }
     }
 
+    const deleteTodo = async (title) =>{
+        console.log("Adding todo", title)
+        try {
+            const response = await fetch(`${BACKEND_URL}/add-todo`,{
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({title})
+            })
+            console.log("response is", response)
+            const newTodo = await response.json();
+            setTodos((prev)=> [...prev, newTodo])
+            console.log("Response received", response)
+        } catch (error) {
+            console.error("Error while creating the todo", error)
+        }
+    }
+
     return (
         <div>
             <h1> Todo List </h1>
