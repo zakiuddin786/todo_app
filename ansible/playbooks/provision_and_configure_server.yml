@@ -1,0 +1,31 @@
+---
+- name: Provision Ec2 instance & install XX
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Adding SSH access to a security group
+      amazon.aws.ec2_group:
+        name: zaki-security 
+        description: Security group for Ec2 instances launched via ansible
+        region: ap-south-1
+        rules:
+          - proto: tcp
+            from_port: 3001
+            to_port: 3001
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 3000
+            to_port: 3000
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+        rules_egress: 
+          - proto: all
+            cidr_ip: 0.0.0.0/0
+      register: security_group
