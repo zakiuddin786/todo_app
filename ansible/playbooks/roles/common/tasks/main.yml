@@ -19,7 +19,7 @@
 
 - name: Copy Source Cope
   become: yes
-  synchonize: 
+  synchronize: 
     src: "{{ playbook_dir }}/../../"
     dest: "/opt/todo-app"
     delete: yes
