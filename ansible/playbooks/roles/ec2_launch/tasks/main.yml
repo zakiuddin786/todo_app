@@ -28,7 +28,7 @@
         cidr_ip: 0.0.0.0/0
   register: security_group
 
-- name: Launch Ec2 instnace
+- name: Launch Ec2 instance
   amazon.aws.ec2_instance:
     name: Ansible-created-instance
     key_name: "{{ ec2_key_name }}"
@@ -38,3 +38,27 @@
     count: 1
     security_group: "{{ security_group.group_id }}"
   register: ec2
+
+- name: Waiting for instance to be ready
+  wait_for: 
+    host: "{{ ec2.instances[0].public_dns_name }}"
+    port: 22
+    delay: 30 
+    timeout: 300
+    state: started
+  when: ec2.instances is defined and ec2.instances | length > 
+  
+- name: Add the Ec2 instance to the inventory dynamically
+  add_host: 
+    name: "{{ec2.instances[0].public_dns_name}}"
+    groups: launched_ec2_instances
+    ansible_ssh_private_key_file: "{{ ec2_ssh_key_path }}"
+    ansible_user: ec2-user
+
+- name: Debug SSH Key Path
+  debug: 
+    var: ec2_ssh_key_path
+
+- name: Debug dynamic inventory
+  debug: 
+    var: groups['launched_ec2_instances']
