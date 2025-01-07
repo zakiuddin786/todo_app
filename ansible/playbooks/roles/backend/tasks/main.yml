@@ -1,3 +1,46 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # tasks file for backend
+- name: Install backend dependencies
+  become: yes
+  npm:
+    path: /opt/todo-app/todo-backend
+    state: present
+  
+- name: Install PM2 globally
+  become: yes
+  npm: 
+    name: pm2
+    global: yes
+
+- name: Check if start.js exists
+  stat: 
+    path: /opt/todo-app/todo-backend/start.js
+  register: start_js
+
+- name: Debugging start.js existence
+  debug:
+    msg: "Start.js status: {{start_js.stat.exists}}"
+
+- name: Check the PM2 list
+  become: yes
+  command: pm2_list
+  register: pm2_list
+  changed_when: false
+
+- name: Debug the Pm2 list
+  debug: 
+    var: pm2_list.
+    
+- name: Start or restart the backend with pm2
+  become: yes
+  command : "pm2 start -f start.js"
+  args:
+    chdir: /opt/todo-app/todo-backend
+  when: start_js.stat.exists
+
+- name: Set pm2 to start on boot
+  become: yes
+  command: pm2 startup
+  args:
+    chdir: /opt/todo-app/todo-backend
