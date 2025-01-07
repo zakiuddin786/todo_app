@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  todo-backend:
+    build: ./todo-backend
+    ports:
+      - "3002:3002"
+    networks:
+      - todo-network
+
+  todo-frontend:
+    build: ./todo-frontend
+    ports:
+      - "80:3000"
+    depends_on:
+      - todo-backend
+    networks:
+      - todo-network
+  
+networks:
+  todo-network:
+    driver: bridge

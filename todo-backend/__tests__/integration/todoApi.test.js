@@ -11,6 +11,7 @@ describe("Todo API Integeration test", () =>{
     beforeAll(async ()=>{
         monogoServer = await MongoMemoryServer.create();
         const mongoUri = monogoServer.getUri();
+        console.log("Mongo server uri is", mongoUri)
         await mongoose.disconnect()
         await mongoose.connect(mongoUri)
     })
@@ -27,6 +28,7 @@ describe("Todo API Integeration test", () =>{
             await Todo.create({title: "Todo 2"})
 
             const response = await request(app).get("/api/get-todos");
+            console.log("Response from the /api/get-todos test", response.body)
             expect(response.status).toBe(200)
             expect(response.body.length).toBe(2)
             expect(response.body[0].title).toBe("Todo 1")

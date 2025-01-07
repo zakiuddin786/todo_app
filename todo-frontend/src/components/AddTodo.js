@@ -19,7 +19,6 @@ const AddTodo = ({ onAdd })=>{
                 placeholder='Add a new Todo'
                 required
             />
-
             <button type="submit" >Add Todo</button>
         </form>
     )

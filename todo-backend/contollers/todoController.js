@@ -2,7 +2,7 @@ const Todo = require("../models/todoModel")
 const logger  = require("../utils/logger")
 
 exports.getTodos = async(req,res)=>{
-    console.log("Fetching the todos from DB")
+    logger.info("Fetching the todos from DB")
     try {
         const todos = await Todo.find();
         logger.info(`fetched all the todos ${JSON.stringify(todos)}`)

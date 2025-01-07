@@ -7,6 +7,8 @@ router.get("/get-todos", getTodos)
 
 router.post("/add-todo",addTodo)
 
+// router.post("/update-todo",updateTodo)
+
 // Todo: Implement the logic for handling deletion of todos
 // router.delete("/:id",)
 
