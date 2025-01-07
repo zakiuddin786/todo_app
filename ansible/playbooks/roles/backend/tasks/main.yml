@@ -24,13 +24,13 @@
 
 - name: Check the PM2 list
   become: yes
-  command: pm2_list
+  command: pm2 list
   register: pm2_list
   changed_when: false
 
 - name: Debug the Pm2 list
   debug: 
-    var: pm2_list.
+    var: pm2_list
     
 - name: Start or restart the backend with pm2
   become: yes
