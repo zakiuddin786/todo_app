@@ -27,3 +27,14 @@
       - proto: all
         cidr_ip: 0.0.0.0/0
   register: security_group
+
+- name: Launch Ec2 instnace
+  amazon.aws.ec2_instance:
+    name: Ansible-created-instance
+    key_name: {{ ec2_key_name }}
+    region: {{ aws_region }}
+    instance_type: {{ ec2_instance_type }}
+    image_id: {{ ec2_ami_id }}
+    count: 1
+    security_group: "{{ security_group.group_id }}"
+  register: ec2
