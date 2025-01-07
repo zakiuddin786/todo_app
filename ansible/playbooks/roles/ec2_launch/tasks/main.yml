@@ -46,7 +46,7 @@
     delay: 30 
     timeout: 300
     state: started
-  when: ec2.instances is defined and ec2.instances | length > 
+  when: ec2.instances is defined and ec2.instances | length > 0
   
 - name: Add the Ec2 instance to the inventory dynamically
   add_host: 
