@@ -3,54 +3,67 @@
 # tasks file for ec2_launch
 - name: Adding SSH access to a security group
   amazon.aws.ec2_group:
-    name: zaki-security 
+    name: "{{ sg_name }}"
     description: Security group for Ec2 instances launched via ansible
-    region: ap-south-1
-    rules:
-
-      - proto: tcp
-        from_port: 22
-        to_port: 22
-        cidr_ip: 0.0.0.0/0
-      - proto: tcp
-        from_port: 3002
-        to_port: 3002
-        cidr_ip: 0.0.0.0/0
-      - proto: tcp
-        from_port: 80
-        to_port: 80
-        cidr_ip: 0.0.0.0/0
+    region: "{{aws_region}}"
+    rules: "{{security_group_rules}}"
     rules_egress: 
       - proto: all
         cidr_ip: 0.0.0.0/0
   register: security_group
 
+- name: Getting information about exisiting Ec2 instances
+  amazon.aws.ec2_instance_info: 
+    region: "{{aws_region}}"
+    filters:
+      "tag:Name": "Ansible-created-instance-*"
+      instance-state-name: ["running", "pending"]
+  register: exisiting_instances
+
+- name: Calculate number of instances to launch
+  set_fact:
+    instances_to_launch: "{{ ec2_instance_count|int - exisiting_instances.instances|length}}"
+
+- name: Debug number of instances to launch
+  debug:
+    msg: "{{instances_to_launch}}"
+    
 - name: Launch Ec2 instance
   amazon.aws.ec2_instance:
-    name: Ansible-created-instance
+    name: "Ansible-created-instance-{{exisiting_instances.instances|length + item}}"
     key_name: "{{ ec2_key_name }}"
     region: "{{ aws_region }}"
     instance_type: "{{ ec2_instance_type }}"
     image_id: "{{ ec2_ami_id }}"
-    count: 1
     security_group: "{{ security_group.group_id }}"
-  register: ec2
+    wait: yes
+    network:
+      assign_public_ip: yes
+  register: new_ec2
+  loop: "{{ range(1,instances_to_launch|int +1)| list}}"
+  when: instances_to_launch|int > 0
+
+- name: Combine existing and new instances
+  set_fact:
+    all_instances: "{{exisiting_instances.instances + ( new_ec2.results|default([]) | map(attribute='instances')|flatten) }}"
 
 - name: Waiting for instance to be ready
   wait_for: 
-    host: "{{ ec2.instances[0].public_dns_name }}"
+    host: "{{ item.public_dns_name }}"
     port: 22
     delay: 30 
     timeout: 300
     state: started
-  when: ec2.instances is defined and ec2.instances | length > 0
-  
+  loop: "{{ all_instances }}"
+
 - name: Add the Ec2 instance to the inventory dynamically
   add_host: 
-    name: "{{ec2.instances[0].public_dns_name}}"
+    name: "{{ item.public_dns_name }}"
     groups: launched_ec2_instances
     ansible_ssh_private_key_file: "{{ ec2_ssh_key_path }}"
-    ansible_user: ec2-user
+    ansible_user: "{{ ec2_ssh_user }}"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  loop: "{{ all_instances }}"
 
 - name: Debug SSH Key Path
   debug: 
@@ -58,4 +71,4 @@
 
 - name: Debug dynamic inventory
   debug: 
-    var: groups['launched_ec2_instances']
+    msg: "All Instances: {{ groups['launched_ec2_instances'] }}"

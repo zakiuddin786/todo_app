@@ -4,20 +4,11 @@
 - name: Install common Packages
   become: yes
   package:
-    name:
-      - httpd
-      - nodejs
-      - npm 
+    name: "{{ item.pk_name }}"
     state: present
+  with_items: "{{ package_names }}"
 
-- name: Start and enable Apache
-  become: yes
-  service: 
-    name: httpd
-    state: started
-    enabled: yes
-
-- name: Copy Source Cope
+- name: Copy Source Code
   become: yes
   synchronize: 
     src: "{{ playbook_dir }}/../../"

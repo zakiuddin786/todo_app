@@ -4,4 +4,14 @@
 aws_region: ap-south-1
 ec2_instance_type: t2.micro
 ec2_ami_id: ami-0fd05997b4dff7aac
-ec2_key_name: zaki-temp
+ec2_key_name: zaki-test
+ec2_instance_count: 2
+ec2_ssh_user: ec2-user
+sg_name: zaki-security 
+security_group_rules:
+  - proto: tcp
+    ports: [22, 80, 443]
+    cidr_ip: 0.0.0.0/0
+  - proto: tcp
+    ports: [3002]
+    cidr_ip: 0.0.0.0/0

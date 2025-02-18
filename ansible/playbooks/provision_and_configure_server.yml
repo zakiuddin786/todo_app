@@ -10,7 +10,8 @@
   gather_facts: yes
   roles: 
     - common
-    - frontend
-    - backend
+    - docker
+    # - frontend
+    # - backend
 
     
