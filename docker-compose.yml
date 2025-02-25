@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   todo-frontend:
     build:  ./todo-frontend
@@ -11,7 +9,7 @@ services:
   todo-backend:
     build: ./todo-backend
     ports:
-      - "3001:3001"
+      - "3002:3002"
     networks:
       - todo-network
 

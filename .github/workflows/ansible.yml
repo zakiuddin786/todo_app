@@ -22,6 +22,7 @@ jobs:
       python -m pip install --upgrade pip
       pip install ansible boto3
       ansible-galaxy collection install amazon.aws 
+      ansible-galaxy collection install community.docker --force
     
    - name : Configure AWS credentials
      uses: aws-actions/configure-aws-credentials@v1
@@ -34,7 +35,7 @@ jobs:
      run : |
        mkdir -p ~/.ssh
        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
-       chmod 600 ~/.ssh/ec2_key.pem
+       chmod 400 ~/.ssh/ec2_key.pem
     
    - name: Debug SSH key
      run : ls -l ~/.ssh/ec2_key.pem

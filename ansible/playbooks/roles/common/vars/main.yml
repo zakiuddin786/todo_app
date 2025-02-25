@@ -1,14 +1,10 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # vars file for common
-apache_package_name:
-  Ubuntu: apache2
-  Amazon: httpd
 node_package_name:
   Amazon: nodejs  
   Ubuntu: node_package_name
 package_names:
-  - pk_name: "{{apache_package_name[ansible_distribution]}}"
   - pk_name: "{{node_package_name[ansible_distribution]}}"
   - pk_name: git
   - pk_name: docker

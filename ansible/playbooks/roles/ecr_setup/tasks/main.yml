@@ -1,0 +1,50 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for ecr_setup
+
+- name: Create the Frontend ECR repository
+  command: >
+    aws ecr create-repository 
+    --repository-name {{ frontend_ecr_repository_name }}
+    --region {{ aws_region }} 
+  register: frontend_ecr_repo
+  ignore_errors: yes
+
+- name: Create the Backend ECR repository
+  command: >
+    aws ecr create-repository 
+    --repository-name {{ backend_ecr_repository_name }}
+    --region {{ aws_region }} 
+  register: backend_ecr_repo
+  ignore_errors: yes
+
+- name: Get AWS account ID
+  shell: "aws sts get-caller-identity --query 'Account' --output text"
+  register: aws_account_id
+
+- name: Set ECR repository URIs
+  set_fact: 
+    frontend_ecr_uri: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ frontend_ecr_repository_name }}"
+    backend_ecr_uri: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ backend_ecr_repository_name }}"
+
+- name: Get ECR login token
+  shell: "aws ecr get-login-password --region {{ aws_region }}"
+  register: ecr_token
+
+- name: Login into ECR 
+  community.docker.docker_login:
+    registry_url: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+    username: AWS
+    password: "{{ ecr_token.stdout }}"
+    reauthorize: yes
+  
+- name: Build and push frontend docker image
+  command: > 
+    docker build -t {{ frontend_ecr_uri }}:latest 
+    --push {{ playbook_dir }}/../../todo-frontend
+
+- name: Build and push backend docker image
+  command: > 
+    docker build -t {{ backend_ecr_uri }}:latest 
+    --push {{ playbook_dir }}/../../todo-backend
+
