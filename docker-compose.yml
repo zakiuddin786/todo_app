@@ -5,6 +5,8 @@ services:
       - "80:80"
     networks:
       - todo-network
+    depends_on:
+      - todo-backend
 
   todo-backend:
     build: ./todo-backend
@@ -12,6 +14,7 @@ services:
       - "3002:3002"
     networks:
       - todo-network
+
 
 networks:
   todo-network:

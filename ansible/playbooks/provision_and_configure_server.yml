@@ -1,8 +1,11 @@
 ---
+
 - name: Provision Ec2 instance & install XX
   hosts: localhost
   gather_facts: no
   roles:
+    - iam_setup
+    - ecr_setup
     - ec2_launch
 
 - name: Configuration of Ec2 instances
