@@ -26,3 +26,11 @@
     role: "{{ Ec2toEcrAccessRole }}"
     state: present
   register: instance_profile
+
+- name: Debug Instance profile
+  debug: 
+    var: instance_profile
+
+- name: Set fact for instance profile name
+  set_fact:
+    ec2_instance_profile_name: "{{ instance_profile.instance_profile_name | default('Ec2EcrInstanceProfile') }}"

@@ -8,6 +8,7 @@
                 "ecr:GetDownloadUrlForLayer",
                 "ecr:BatchCheckLayerAvailability",
                 "ecr:BatchGetImage",
+                "ecr:DescribeRepositories",
                 "ec2:DescribeInstances"
             ],
             "Resource": "*"

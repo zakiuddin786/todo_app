@@ -9,29 +9,29 @@
     enabled: yes
   become: yes
 
-- name: Create Docker CLI plugin directory
-  file: 
-    path: /usr/local/lib/docker/cli-plugins
-    state: directory
-    mode: "0755"
-  become: yes
+# - name: Create Docker CLI plugin directory
+#   file: 
+#     path: /usr/local/lib/docker/cli-plugins
+#     state: directory
+#     mode: "0755"
+#   become: yes
 
-- name: Get latest Docker compose release version
-  uri: 
-    url: https://api.github.com/repos/docker/compose/releases/latest
-    return_content: yes
-  register: docker_compose_latest
+# - name: Get latest Docker compose release version
+#   uri: 
+#     url: https://api.github.com/repos/docker/compose/releases/latest
+#     return_content: yes
+#   register: docker_compose_latest
 
-- name: Set Docker Compose Version
-  set_fact:
-    docker_compose_version: "{{docker_compose_latest.json.tag_name}}"
+# - name: Set Docker Compose Version
+#   set_fact:
+#     docker_compose_version: "{{docker_compose_latest.json.tag_name}}"
 
-- name: Install Docker Compose Plugin
-  get_url:
-    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
-    dest: /usr/local/lib/docker/cli-plugins/docker-compose
-    mode: "0755"
-  become: yes
+# - name: Install Docker Compose Plugin
+#   get_url:
+#     url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+#     dest: /usr/local/lib/docker/cli-plugins/docker-compose
+#     mode: "0755"
+#   become: yes
 
 - name: Create Docker group
   group: 
@@ -45,8 +45,89 @@
     append: yes
   become: yes
 
-- name: Run Docker Compose
-  community.docker.docker_compose_v2:
-    project_src: /opt/todo-app
-    state: present
-  become: yes
+# - name: Run Docker Compose
+#   community.docker.docker_compose_v2:
+#     project_src: /opt/todo-app
+#     state: present
+#   become: yes
+
+- name: Verify IAM role using AWS CLI
+  shell: aws sts get-caller-identity
+  register: aws_cli_check
+
+- name: Debug CLI Check
+  debug:
+    var: aws_cli_check
+
+- name: Assume IAM role
+  shell: |
+    aws sts assume-role --role-arn {{ role_arn }} --role-session-name Ec2EcrSession
+  register: assume_role_result
+
+- name: Debug IAM role result
+  debug:
+    var: assume_role_result
+
+- name: Set AWS credentials
+  set_fact:
+    aws_access_key: "{{ (assume_role_result.stdout | from_json ).Credentials.AccessKeyId }}"
+    aws_secret_key: "{{ (assume_role_result.stdout | from_json ).Credentials.SecretAccessKey }}"
+    aws_session_token: "{{ (assume_role_result.stdout | from_json ).Credentials.SessionToken }}"
+
+- name: Get ECR login token
+  shell: |
+    aws ecr get-login-password --region {{ aws_region }} 
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+    AWS_SESSION_TOKEN: "{{ aws_session_token }}"
+  register: ecr_token
+
+- name: Debug ECR Token
+  debug: 
+    var: ecr_token
+
+- name: Login into ECR registry
+  community.docker.docker_login:
+    registry_url: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+    username: AWS
+    password: "{{ ecr_token.stdout }}"
+    reauthorize: yes
+  register: docker_login_result
+
+- name: Debug ECR Token
+  debug: 
+    var: docker_login_result
+
+- name: Get Frontend ECR repository information
+  shell: | 
+    aws ecr describe-repositories --repository-names {{ frontend_ecr_repository_name }} --region {{ aws_region }}
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+    AWS_SESSION_TOKEN: "{{ aws_session_token }}"
+  register: frontend_ecr_repo
+
+- name: Get Backend ECR repository information
+  shell: | 
+    aws ecr describe-repositories --repository-names {{ backend_ecr_repository_name }} --region {{ aws_region }}
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+    AWS_SESSION_TOKEN: "{{ aws_session_token }}"
+  register: backend_ecr_repo
+
+- name: Pull latest frontend image
+  docker_image:
+    name: "{{ frontend_ecr_uri }}:latest"
+    source: pull
+    force_source: yes
+
+- name: Pull latest Backend image
+  docker_image:
+    name: "{{ backend_ecr_uri }}:latest"
+    source: pull
+    force_source: yes
+
+
+
