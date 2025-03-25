@@ -44,7 +44,6 @@ jobs:
      run : |
       ansible-playbook ansible/playbooks/provision_and_configure_server.yml \
       -e "ec2_ssh_key_path=~/.ssh/ec2_key.pem"
-
      env: 
       AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY_ID:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
