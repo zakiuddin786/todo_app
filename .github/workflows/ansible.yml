@@ -42,7 +42,7 @@ jobs:
 
    - name: Providing execute permissions
      run : |
-        chmod 600 terraform/terraform.sh
+        chmod +x terraform/terraform.sh
         ls -la terraform/terraform.sh
 
    - name: Terraform Apply
