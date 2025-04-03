@@ -11,6 +11,13 @@ resource "aws_iam_role" "ec2_role" {
             Principal = {
                 Service = "ec2.amazonaws.com"
             }
+        },
+        {
+            Action = "sts:AssumeRole"
+            Effect = "Allow"
+            Principal = {
+              AWS = "arn:aws:iam::688567260640:role/dev-ec2-ecr-role"
+            }
         }
     ]
   })
