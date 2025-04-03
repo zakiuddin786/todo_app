@@ -5,3 +5,7 @@ output "backend_ecr_uri" {
 output "backend_ecr_arn" {
   value = aws_ecr_repository.backend.arn
 }
+
+output "aws_account_id" {
+  value = aws_ecr_repository.backend.registry_id
+}
