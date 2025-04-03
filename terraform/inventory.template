@@ -4,6 +4,7 @@ backend_ecr_uri=${backend_ecr_uri}
 environment=${environment}
 role_arn=${role_arn}
 aws_account_id=${aws_account_id}
+backend_ecr_repository_name=${backend_ecr_repository_name}
 
 [launched_ec2_instances]
 %{ for ip in ec2_public_dns ~}
