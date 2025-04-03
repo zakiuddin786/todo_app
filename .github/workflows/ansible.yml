@@ -40,6 +40,10 @@ jobs:
       cd terraform
       terraform init
 
+   - name: Providing execute permissions
+     run : |
+        chmod 600 /terraform/terraform.sh
+
    - name: Terraform Apply
      run: |
       cd terraform 
