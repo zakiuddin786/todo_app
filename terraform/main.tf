@@ -17,3 +17,39 @@ module "cdn" {
   }
   environment = var.environment
 }
+
+module "iam" {
+  source = "./modules/iam"
+  environment = var.environment
+}
+module "ecr" {
+  source = "./modules/ecr"
+  environment = var.environment
+}
+
+module "ec2" {
+  source = "./modules/ec2"
+  environment = var.environment
+  instance_config = {
+    ami_id = var.instance_config.ami_id
+    instance_type = var.instance_config.instance_type
+    vpc_id = var.instance_config.vpc_id
+    instance_count = var.instance_config.instance_count
+    subnet_ids = var.instance_config.subnet_ids
+    instance_profile_name =  module.iam.instance_profile_name
+    alb_security_group_id = module.alb.alb_security_group_id
+    target_group_arn = module.alb.target_group_arn
+    ssh_key_name = var.instance_config.ssh_key_name
+  }
+
+}
+module "alb" {
+  source = "./modules/alb"
+  environment = var.environment
+
+  alb_config = {
+    vpc_id = var.instance_config.vpc_id
+    public_subnet_ids = var.alb_config.public_subnet_ids
+    certificate_arn = var.alb_config.certificate_arn
+  }
+}

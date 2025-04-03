@@ -7,6 +7,24 @@ variable "cloudfront_config" {
   })
 }
 
+variable "alb_config" {
+  type = object({
+    public_subnet_ids = list(string)
+    certificate_arn = string
+  })
+}
+
+variable "instance_config" {
+  type = object({
+    vpc_id = string
+    ami_id = string,
+    instance_count = number,
+    subnet_ids = list(string),
+    ssh_key_name = string,
+    instance_type = string
+  })
+}
+
 variable "environment" {
   type = string
 }

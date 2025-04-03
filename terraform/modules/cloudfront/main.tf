@@ -26,15 +26,12 @@ resource "aws_cloudfront_distribution" "website" {
     response_page_path = "/index.html"
   }
 
-
   default_cache_behavior {
     allowed_methods  = [ "GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "S3-${var.cloudfront_config.bucket_name}"
-
     forwarded_values {
       query_string = false
-
       cookies {
         forward = "none"
       }
@@ -45,14 +42,12 @@ resource "aws_cloudfront_distribution" "website" {
     default_ttl            = 3600
     max_ttl                = 86400
     compress = true
-
   }
     restrictions {
-            geo_restriction {
-            restriction_type = "none"
-            }
+      geo_restriction {
+      restriction_type = "none"
+      }
     }
-
     viewer_certificate {
         acm_certificate_arn = var.cloudfront_config.acm_certificate_arn
         minimum_protocol_version = "TLSv1.2_2021"

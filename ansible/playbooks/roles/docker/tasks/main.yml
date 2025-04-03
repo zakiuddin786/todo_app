@@ -9,30 +9,6 @@
     enabled: yes
   become: yes
 
-# - name: Create Docker CLI plugin directory
-#   file: 
-#     path: /usr/local/lib/docker/cli-plugins
-#     state: directory
-#     mode: "0755"
-#   become: yes
-
-# - name: Get latest Docker compose release version
-#   uri: 
-#     url: https://api.github.com/repos/docker/compose/releases/latest
-#     return_content: yes
-#   register: docker_compose_latest
-
-# - name: Set Docker Compose Version
-#   set_fact:
-#     docker_compose_version: "{{docker_compose_latest.json.tag_name}}"
-
-# - name: Install Docker Compose Plugin
-#   get_url:
-#     url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
-#     dest: /usr/local/lib/docker/cli-plugins/docker-compose
-#     mode: "0755"
-#   become: yes
-
 - name: Create Docker group
   group: 
     name: docker
@@ -99,15 +75,6 @@
   debug: 
     var: docker_login_result
 
-- name: Get Frontend ECR repository information
-  shell: | 
-    aws ecr describe-repositories --repository-names {{ frontend_ecr_repository_name }} --region {{ aws_region }}
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-    AWS_SESSION_TOKEN: "{{ aws_session_token }}"
-  register: frontend_ecr_repo
-
 - name: Get Backend ECR repository information
   shell: | 
     aws ecr describe-repositories --repository-names {{ backend_ecr_repository_name }} --region {{ aws_region }}
@@ -117,17 +84,8 @@
     AWS_SESSION_TOKEN: "{{ aws_session_token }}"
   register: backend_ecr_repo
 
-- name: Pull latest frontend image
-  docker_image:
-    name: "{{ frontend_ecr_uri }}:latest"
-    source: pull
-    force_source: yes
-
 - name: Pull latest Backend image
   docker_image:
     name: "{{ backend_ecr_uri }}:latest"
     source: pull
     force_source: yes
-
-
-

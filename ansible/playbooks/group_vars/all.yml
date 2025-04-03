@@ -1,6 +1,5 @@
 ---
 aws_region: ap-south-1
-aws_account_id: 905418317311
-frontend_ecr_repository_name: "todo-frontend"
-backend_ecr_repository_name: "todo-backend"
 docker_image_tag: "latest"
+batch_size: 1 # this is for the deployment manage
+max_fail_percentage: 0

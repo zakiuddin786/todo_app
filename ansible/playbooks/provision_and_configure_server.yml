@@ -1,23 +1,17 @@
 ---
-
 - name: Provision Ec2 instance & install XX
   hosts: localhost
   gather_facts: no
   roles:
-    - iam_setup
     - ecr_setup
-    - ec2_launch
 
 - name: Configuration of Ec2 instances
   hosts: launched_ec2_instances
   gather_facts: yes
-  pre_tasks:
-    - name: Set ECR URI's for this particular play
-      set_fact:
-        frontend_ecr_uri: "{{ hostvars['localhost']['frontend_ecr_uri'] }}"
-        backend_ecr_uri: "{{ hostvars['localhost']['backend_ecr_uri'] }}"
   roles: 
     - common
     - docker
+
+
 
     
