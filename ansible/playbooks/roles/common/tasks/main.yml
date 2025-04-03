@@ -19,6 +19,6 @@
       - "--exclude=.git"
       - "--exclude=.github"
       - "--exclude=ansible"
-      - "--exlcude=todo-frontend"
-      - "--exlcude=terraform"
+      - "--exclude=todo-frontend"
+      - "--exclude=terraform"
       
