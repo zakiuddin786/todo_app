@@ -44,6 +44,8 @@ jobs:
      run : |
         chmod +x terraform/terraform.sh
         ls -la terraform/terraform.sh
+        chmod +x todo-frontend/deploy_frontend.sh
+        ls -la todo-frontend/deploy_frontend.sh
 
    - name: Terraform Apply
      run: |
