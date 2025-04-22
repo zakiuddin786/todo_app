@@ -59,7 +59,7 @@ jobs:
    - name: Debug SSH key
      run : ls -l ~/.ssh/ec2_key.pem
 
-   - name: Run Ansible Playbook
+   - name: Run Ansible Playbook for deploying backend
      run : |
       ansible-playbook \
       -i ansible/inventory \
@@ -70,6 +70,32 @@ jobs:
       AWS_SECRET_ACCESS_KEY_ID:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       EC2_SSH_KEY_PATH: ~/.ssh/ec2_key.pem
       ANSIBLE_HOST_KEY_CHECKING: False
+
+   - name: Extract S3 bucket name from inventory
+     id: get-bucket
+     run: |
+      BUCKET_NAME=$(grep "frontend_bucket_name=" ansible/inventory | cut -d"=" -f2)
+      echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+
+   - name: Extract cloudfront distribution id from inventory
+     id: get-cf-distribution
+     run: |
+        CF_DISTRIBUTION_NAME=$(grep "cloudfront_distribution_id=" ansible/inventory | cut -d"=" -f2)
+        echo "cloudfront_distribution_id=$CF_DISTRIBUTION_NAME" >> $GITHUB_OUTPUT
+
+   - name: Deploy Frontend
+     run: |
+      cd todo-frontend
+      ./deploy_frontend.sh "${{ steps.get-bucket.outputs.bucket_name}}" "${{ steps.get-cf-distribution.outputs.cloudfront_distribution_id}}"
+     env: 
+        AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY_ID:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ap-south-1
+
+      
+
+
+    
 
 
 

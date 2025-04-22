@@ -1,10 +1,12 @@
 [all:vars]
 aws_region=${aws_region}
 backend_ecr_uri=${backend_ecr_uri}
-environment=${environment}
+env_var=${environment}
 role_arn=${role_arn}
 aws_account_id=${aws_account_id}
 backend_ecr_repository_name=${backend_ecr_repository_name}
+frontend_bucket_name=${frontend_bucket_name}
+cloudfront_distribution_id=${cloudfront_distribution_id}
 
 [launched_ec2_instances]
 %{ for ip in ec2_public_dns ~}

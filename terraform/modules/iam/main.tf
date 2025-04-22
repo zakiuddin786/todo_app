@@ -11,13 +11,6 @@ resource "aws_iam_role" "ec2_role" {
             Principal = {
                 Service = "ec2.amazonaws.com"
             }
-        },
-        {
-            Action = "sts:AssumeRole"
-            Effect = "Allow"
-            Principal = {
-              AWS = "arn:aws:iam::688567260640:role/dev-ec2-ecr-role"
-            }
         }
     ]
   })
@@ -44,6 +37,28 @@ resource "aws_iam_role_policy" "ecr_access" {
                 "ec2:DescribeInstances"
             ]
             Resource = "*"
+        }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "ssm_access" {
+  name = "${var.environment}-ssm-access"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+        {
+            Effect = "Allow"
+            Action = [
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+                "ssm:GetParametersByPath",
+            ]
+            Resource = [
+              "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/${var.environment}/backend/*"
+            ]
         }
     ]
   })

@@ -21,6 +21,8 @@ module "cdn" {
 module "iam" {
   source = "./modules/iam"
   environment = var.environment
+  aws_region = var.aws_region
+  aws_account_id = module.ecr.aws_account_id
 }
 module "ecr" {
   source = "./modules/ecr"

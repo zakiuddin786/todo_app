@@ -21,42 +21,9 @@
     append: yes
   become: yes
 
-# - name: Run Docker Compose
-#   community.docker.docker_compose_v2:
-#     project_src: /opt/todo-app
-#     state: present
-#   become: yes
-
-- name: Verify IAM role using AWS CLI
-  shell: aws sts get-caller-identity
-  register: aws_cli_check
-
-- name: Debug CLI Check
-  debug:
-    var: aws_cli_check
-
-- name: Assume IAM role
-  shell: |
-    aws sts assume-role --role-arn {{ role_arn }} --role-session-name Ec2EcrSession
-  register: assume_role_result
-
-- name: Debug IAM role result
-  debug:
-    var: assume_role_result
-
-- name: Set AWS credentials
-  set_fact:
-    aws_access_key: "{{ (assume_role_result.stdout | from_json ).Credentials.AccessKeyId }}"
-    aws_secret_key: "{{ (assume_role_result.stdout | from_json ).Credentials.SecretAccessKey }}"
-    aws_session_token: "{{ (assume_role_result.stdout | from_json ).Credentials.SessionToken }}"
-
 - name: Get ECR login token
   shell: |
     aws ecr get-login-password --region {{ aws_region }} 
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-    AWS_SESSION_TOKEN: "{{ aws_session_token }}"
   register: ecr_token
 
 - name: Debug ECR Token
@@ -75,17 +42,39 @@
   debug: 
     var: docker_login_result
 
-- name: Get Backend ECR repository information
-  shell: | 
-    aws ecr describe-repositories --repository-names {{ backend_ecr_repository_name }} --region {{ aws_region }}
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-    AWS_SESSION_TOKEN: "{{ aws_session_token }}"
-  register: backend_ecr_repo
-
 - name: Pull latest Backend image
   docker_image:
     name: "{{ backend_ecr_uri }}:latest"
     source: pull
     force_source: yes
+
+- name: Get SSM Parameter
+  shell: |
+    aws ssm get-parameter \
+    --name "/{{ env_var }}/backend/MONGODB_URI" \
+    --with-decryption \
+    --query "Parameter.Value" \
+    --output text \
+    --region {{ aws_region }}
+  register: mongodb_uri
+
+
+- name: Create .env file from SSM paramenters
+  copy: 
+    content: |
+      MONGODB_URI={{mongodb_uri.stdout }}
+      NODE_ENV=production
+      PORT=3002
+    dest: /opt/todo-app/todo-backend/.env
+    mode: "0600"
+
+- name: Start the backend container
+  docker_container:
+    name: backend
+    image: "{{ backend_ecr_uri }}:latest"
+    state: started
+    restart_policy: always
+    ports: 
+      - "3002:3002"
+    env_file: /opt/todo-app/todo-backend/.env
+
