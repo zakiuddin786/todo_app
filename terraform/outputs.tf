@@ -2,6 +2,7 @@ resource "local_file" "inventory_file" {
   content = templatefile("./inventory.template", 
   {
     ec2_public_dns = module.ec2.backend_public_dns
+    monitoring_ec2_public_dns = module.monitoring.monitoring_public_dns
     aws_region = var.aws_region
     backend_ecr_uri = module.ecr.backend_ecr_uri
     environment = var.environment

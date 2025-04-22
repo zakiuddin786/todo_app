@@ -55,3 +55,20 @@ module "alb" {
     certificate_arn = var.alb_config.certificate_arn
   }
 }
+
+module "monitoring" {
+  source = "./modules/monitoring"
+  environment = var.environment
+  instance_config = {
+    ami_id = var.instance_config.ami_id
+    instance_type = var.instance_config.instance_type
+    vpc_id = var.instance_config.vpc_id
+    instance_count = 1
+    subnet_ids = var.instance_config.subnet_ids
+    instance_profile_name =  module.iam.instance_profile_name
+    alb_security_group_id = module.alb.alb_security_group_id
+    target_group_arn = module.alb.target_group_arn
+    ssh_key_name = var.instance_config.ssh_key_name
+  }
+
+}
