@@ -1,19 +1,99 @@
 const winston = require('winston');
+const context = require("./context")
+const LokiTransport = require("winston-loki");
+const path = require("path")
+const moment = require("moment")
+const os = require("os")
+
+const requestIdFormat = winston.format((info) =>{
+  const requestId = context.get("requestId") || "no-request-id";
+  info.requestId = requestId;
+  return info;
+})
+
+const customFormat = winston.format.combine(
+  requestIdFormat(),
+  winston.format.timestamp(),
+  winston.format.metadata({
+    fillWith: ["requestId", "service", "environment", "instance"]
+  }),
+  winston.format.json()
+)
+
+const getLogDirectory = () =>{
+  const isProd = process.env.NODE_ENV === "production";
+  return isProd ? "/var/log/todo-app" : path.join(process.cwd(), "logs");
+}
+
+const getLogFileName = () =>{
+  const timestamp = moment().format("YYYY-MM-DD-HH");
+  const instanceName = process.env.NODE_ENV === "production"
+    ? (process.env.EC2_HOSTNAME || os.hostname())
+    : "local" 
+    console.log("log directory is", getLogDirectory())
+    return path.join(getLogDirectory(), `${instanceName}-${timestamp}-application.log`)
+}
+
+class DynamicFileTransport extends winston.transports.File {
+  constructor (opts = {}) {
+    super({
+      ...opts,
+      filename: getLogFileName()
+    });
+
+    setInterval(() =>{
+      const newFilename = getLogFileName();
+      if(this.filename !== newFilename){
+          this.filename = newFilename
+      }
+    }, 60*60*1000)
+  }
+}
+
+const getTransports = () =>{
+  const transports = [
+      new winston.transports.Console({}),
+      new DynamicFileTransport({
+        format: customFormat,
+        //  we can add maxsize, maxFiles etc options here
+      })
+    ]
+  if(process.env.NODE_ENV === "production"){
+    transports.push(
+      new LokiTransport({
+        host: process.env.LOKI_URL || "http://localhost:3100",
+        json: true,
+        labels: {
+            app: "todo-app",
+            environment: process.env.NODE_ENV,
+            instance: process.env.EC2_HOSTNAME || os.hostname()
+        },
+        format: customFormat,
+        batching: true,
+        interval: 5,
+        replaceTimestamp: true,
+        onConnectionError: (err) =>{ 
+          console.error("Loki Connection error: err")
+        } 
+      })
+    )
+  }
+  return transports;
+}
 
 const logger = winston.createLogger({
   level: process.env.NODE_ENV || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'user-service' },
-  transports: [
-    // - Write all logs with importance level of `info` or higher to `combined.log`
-    //   (i.e., fatal, error, warn, and info, but not trace)
-    //
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
+  format: customFormat,
+  defaultMeta: { service: 'todo-app' , environment: process.env.NODE_ENV || "development"},
+  transports: getTransports()
 });
+
+logger.transports.forEach(transport =>{
+  if(transport instanceof winston.transports.File){
+    transport.on("error", (error) =>{
+      console.error("Error in file transport", error)
+    })
+  }
+})
 
 module.exports = logger;
