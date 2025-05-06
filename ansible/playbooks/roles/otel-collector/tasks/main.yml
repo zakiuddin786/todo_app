@@ -1,0 +1,40 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for otel-collector
+- name: Create Opentelemetry Collector directory
+  file:
+    path: /etc/otel-collector
+    state: directory
+    mode: "0755"
+
+- name: Download Opentelemetry Collector
+  get_url: 
+    url: https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.125.0/otelcol-contrib_0.125.0_linux_amd64.tar.gz
+    dest: /tmp/otelcol.tar.gz
+    mode: "0644"
+
+- name: Extract Opentelemetry Collector
+  unarchive:
+    src: /tmp/otelcol.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
+  
+- name: Copy Opentelemetry Collector config
+  template:
+    src: otel-collector-config.yaml.j2
+    dest: /etc/otel-collector/config.yaml
+    mode: "0644"
+
+- name: Copy Opentelemetry Service file
+  template:
+    src: otel-collector.service.j2
+    dest: /etc/systemd/system/otel-collector.service
+    mode: "0644"
+
+- name: Start Opentelemetry Collector
+  systemd:
+    name: otel-collector
+    state: started
+    enabled: true
+    daemon_reload: yes
+

@@ -1,0 +1,14 @@
+[Unit]
+Description=Opentelemetry collector
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/otelcol-contrib --config /etc/otel-collector/config.yaml --set service.telemetry.logs.level=info
+Restart=always
+User=root
+Group=root
+Environment=OTEL_LOG_LEVEL=info
+
+
+[Install]
+WantedBy=multi-user.target

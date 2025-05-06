@@ -15,3 +15,7 @@ variable "instance_config" {
 variable "environment" {
   type = string
 }
+
+variable "monitoring_security_group_id" {
+  type = string
+}

@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+    - job_name: "prometheus"
+      static_configs:
+        - targets: ["localhost:9090"]
+
+    - job_name: "node-exporter"
+      ec2_sd_configs:
+        - region: {{ aws_region }}
+          port: 9100
+          filters:
+            - name: "tag:Name"
+              values: ["{{ backend_ec2_tag_name}}"]
+            - name: "instance-state-name"
+              values: ["running"]
+
+    - job_name: "backend"
+      ec2_sd_configs:
+        - region: {{ aws_region }}
+          port: 3002
+          filters:
+          - name: "tag:Name"
+            values: ["{{ backend_ec2_tag_name}}"]
+          - name: "instance-state-name"
+            values: ["running"]

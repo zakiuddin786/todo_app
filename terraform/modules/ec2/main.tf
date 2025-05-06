@@ -43,6 +43,23 @@ resource "aws_security_group" "backend" {
     security_groups = [var.instance_config.alb_security_group_id]
   }
 
+
+  ingress {
+    from_port = 9100
+    to_port = 9100
+    protocol = "tcp"
+    security_groups = [var.monitoring_security_group_id]
+    description = "Allow node exporter metrics scraping"
+  }
+
+  ingress {
+    from_port = 3002
+    to_port = 3002
+    protocol = "tcp"
+    security_groups = [var.monitoring_security_group_id]
+    description = "Allow application metrics scraping"
+  }
+
   egress {
     from_port = 0
     to_port = 0

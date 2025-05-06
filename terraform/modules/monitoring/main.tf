@@ -3,7 +3,7 @@ resource "aws_instance" "monitoring" {
     instance_type = var.instance_config.instance_type
     subnet_id = element(var.instance_config.subnet_ids, count.index % length(var.instance_config.subnet_ids))
     count = var.instance_config.instance_count
-    vpc_security_group_ids = [aws_security_group.montoring.id]
+    vpc_security_group_ids = [aws_security_group.monitoring-sg.id]
     key_name = var.instance_config.ssh_key_name
     iam_instance_profile = aws_iam_instance_profile.monitoring_profile.name
 
@@ -12,13 +12,13 @@ resource "aws_instance" "monitoring" {
     }
 
     tags = {
-        Name = "${var.environment}-backend"
+        Name = "${var.environment}-monitoring"
         Environment = var.environment
     }
 }
 
 
-resource "aws_security_group" "montoring" {
+resource "aws_security_group" "monitoring-sg" {
   name = "${var.environment}-monitoring-sg"
   description = "Security group for monitoring stack"
   vpc_id = var.instance_config.vpc_id
@@ -33,6 +33,13 @@ resource "aws_security_group" "montoring" {
   ingress {
     from_port = 9090 # Prometheus
     to_port = 9090
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+    ingress {
+    from_port = 3100 # Loki
+    to_port = 3100
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

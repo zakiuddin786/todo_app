@@ -1,0 +1,28 @@
+receivers:
+  filelog:
+    # Configuration for filelog receiver
+    include: [ /var/log/todo-app/*.log ]
+    start_at: beginning
+    operators:
+      - type: json_parser
+
+processors:
+  # Processors for data transformation, e.g., attribute processing
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 1024
+
+exporters:
+  loki:
+    endpoint: http://{{ monitoring_instance_ip }}:3100/loki/api/v1/push
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [loki]
+  telemetry:
+    logs:
+      level: debug

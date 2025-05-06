@@ -41,12 +41,35 @@ class DynamicFileTransport extends winston.transports.File {
       filename: getLogFileName()
     });
 
-    setInterval(() =>{
-      const newFilename = getLogFileName();
-      if(this.filename !== newFilename){
-          this.filename = newFilename
-      }
-    }, 60*60*1000)
+    const setHourlyInterval = () =>{
+      const now = new Date();
+      const nextHour = new Date(now);
+      nextHour.setHours(nextHour.getHours()+ 1);
+      nextHour.setMinutes(0);
+      nextHour.setSeconds(0);
+      nextHour.setMilliseconds(0);
+
+      const msUntilNextHour = nextHour - now;
+      console.log("ms until next hour is", msUntilNextHour);
+
+      setTimeout(()=>{
+        const newFilename = getLogFileName();
+        if(this.filename !== newFilename){
+            this.filename = newFilename
+        }
+  
+        setInterval(() =>{
+          const newFilename = getLogFileName();
+          if(this.filename !== newFilename){
+              this.filename = newFilename
+          }
+        }, 60 * 60 * 1000)
+  
+      }, msUntilNextHour)
+
+    }
+
+    setHourlyInterval();
   }
 }
 
@@ -82,7 +105,7 @@ const getTransports = () =>{
 }
 
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV || 'info',
+  level: process.env.LOG_LEVEL || 'info',
   format: customFormat,
   defaultMeta: { service: 'todo-app' , environment: process.env.NODE_ENV || "development"},
   transports: getTransports()

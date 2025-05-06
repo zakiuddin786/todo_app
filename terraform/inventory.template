@@ -7,6 +7,7 @@ aws_account_id=${aws_account_id}
 backend_ecr_repository_name=${backend_ecr_repository_name}
 frontend_bucket_name=${frontend_bucket_name}
 cloudfront_distribution_id=${cloudfront_distribution_id}
+backend_ec2_tag_name=${environment}-backend
 
 [launched_ec2_instances]
 %{ for ip in ec2_public_dns ~}

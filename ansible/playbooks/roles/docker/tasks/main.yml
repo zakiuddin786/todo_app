@@ -76,5 +76,7 @@
     restart_policy: always
     ports: 
       - "3002:3002"
+    volumes:
+      - /var/log/todo-app:/var/log/todo-app
     env_file: /opt/todo-app/todo-backend/.env
 

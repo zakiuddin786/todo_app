@@ -43,7 +43,7 @@ module "ec2" {
     target_group_arn = module.alb.target_group_arn
     ssh_key_name = var.instance_config.ssh_key_name
   }
-
+  monitoring_security_group_id = module.monitoring.monitoring_security_group_id
 }
 module "alb" {
   source = "./modules/alb"

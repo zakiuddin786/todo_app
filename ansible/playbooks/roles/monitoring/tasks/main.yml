@@ -1,0 +1,141 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for monitoring
+- name: Install required packages
+  package:
+    name:
+      - docker
+    state: present
+
+- name: Create docker-compose directory
+  file: 
+    path: /usr/local/bin
+    state: directory
+    mode: "0755"
+
+- name: Download Docker Compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/v2.35.1/docker-compose-linux-x86_64"
+    dest: /usr/local/bin/docker-compose
+    mode: "0755"
+
+- name: Create Sym link for docker compose
+  file: 
+    src: /usr/local/bin/docker-compose
+    dest: /usr/bin/docker-compose
+    state: link
+
+- name: Start Docker Service
+  service: 
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Create Monitoring Directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items:
+    - "{{ monitoring_dir }}"
+    - "{{ monitoring_dir }}/prometheus"
+    - "{{ monitoring_dir }}/prometheus/data"
+    - "{{ monitoring_dir }}/grafana"
+
+- name: Create Loki Directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items:
+    - "{{ monitoring_dir }}/loki"
+    - "{{ monitoring_dir }}/loki/tsdb"
+    - "{{ monitoring_dir }}/loki/chunks"
+
+- name: Copy Docker Compose file
+  template: 
+    src: docker-compose.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+
+- name: Copy Prometheus config
+  template: 
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
+    # ref: https://github.com/prometheus/prometheus/blob/release-3.3/config/testdata/conf.good.yml
+
+- name: Copy Loki config
+  template: 
+    src: loki-config.yml.j2
+    dest: "{{ monitoring_dir }}/loki/local-config.yml"
+
+- name: Stop existing containers
+  shell: |
+    cd {{ monitoring_dir }}
+    docker-compose down
+  ignore_errors: yes
+
+- name: Start monitoring stack
+  shell: |
+    cd {{ monitoring_dir }}
+    docker-compose up -d --build
+
+- name: Wait for services to be up
+  wait_for:
+    host: localhost
+    port: "{{ item }}"
+    timeout: 300
+  with_items:
+    - 9090 # Prometheus
+    - 3000 # Grafana
+    - 9100 # Node exporter
+    - 3100 # Loki
+
+- name: Show service status
+  shell: docker-compose ps
+  args:
+    chdir: "{{ monitoring_dir }}"
+  register: service_status
+
+- name: Debug Service staus
+  debug: 
+    var: service_status.stdout_lines
+
+- name: Wait for grafana to be ready
+  uri: 
+    url: "http://localhost:3000/api/health"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 60
+  delay: 1
+
+- name: Configure Prometheus datasource
+  uri:
+    url: "http://localhost:3000/api/datasources"
+    method: POST
+    user: admin
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: yes
+    body_format: json
+    body:
+      name: "Prometheus"
+      type: "prometheus"
+      url: "http://prometheus:9090"
+      access: "proxy"
+      isDefault: true
+    status_code: [200, 409] # 409 means that already exists
+
+- name: Configure Loki datasource
+  uri:
+    url: "http://localhost:3000/api/datasources"
+    method: POST
+    user: admin
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: yes
+    body_format: json
+    body:
+      name: "Loki"
+      type: "loki"
+      url: "http://loki:3100"
+      access: "proxy"
+    status_code: [200, 409] # 409 means that already exists
